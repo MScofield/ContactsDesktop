@@ -2,14 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>SciFi Film Tracker</title>
 </head>
-Hello, {{#user}} {{name}}! {{/user}} go jump in the lake.
+<br>
+SciFi Film tracker 1.01, 2016 <br>
+<br>
+Hello, {{nameInput}}! <br>
+<br>
 <form action="/logout" method="post">
     <button type="submit">Logout</button>
+</form><br>
+Welcome to Sci-Fi film tracker by Scofield Services!!!<br>
+<br>
+This web-app will help you keep track of SciFi films!!!<br>
+<br>
+You will never miss one or forget their details again!!!
+<br>
+<br>
+<body>
+<form action="/create-entry" method="post">
+    <input type="text" placeholder="Film Title" name="titleText" width="400"/><br>
+    <input type="text" placeholder="Film Writer" name="writerText" width="400"/><br>
+    <input type="text" placeholder="Film Director" name="directorText" width="400"/><br>
+    <input type="text" placeholder="Film Release Date" name="releaseText" width="400"/><br>
+    <input type="text" placeholder="Seen it? [true] or [false]" name="seenBoo" width="400"/><br>
+    <input type="text" placeholder="NOTES" name="notesText" width="400"/><br>
+    <button type="submit" width="400">Save Film Entry</button>
 </form>
 
-<body>
+
+{{#films}}
+    {{title}},<br>
+Written by: {{writer}; Directed by: {{director}} Released: {{releaseYear}};  Seen: {{seen}}.<br>
+{{/films}}
+
 
 </body>
 </html>

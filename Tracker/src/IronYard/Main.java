@@ -17,45 +17,105 @@ import java.net.URL;
 
 
 public class Main {
+    static HashMap<String, User> users = new HashMap<>();
 
-    public static HashMap<String, User> users = new HashMap<>();
 
-    public static void main(String[] args) {
-
+    public static void main(String[] args) throws Exception {
         Spark.init();
+
         Spark.get(
                 "/",
                 ((request, response) -> {
-                    HashMap hashToSession = new HashMap();
                     Session session = request.session();
-                    String userName = session.attribute("userName");
+                    String userName = session.attribute("loginName");
+                    String userPassword = session.attribute("loginPassword");
+                    System.out.println(userName);
+                    System.out.println(userPassword);
+
+
                     User user = users.get(userName);
+                    //User password = users.get(userPassword);
+                    HashMap sessionHash = new HashMap();
 
                     if(user == null) {
-                        return new ModelAndView(hashToSession, "login.html");
+                        return new ModelAndView(sessionHash, "login.html");
                     }else{
-                        hashToSession.put("user", user);
-                        hashToSession.put("address", "1000 tryingtoohard ave");
-                        return new ModelAndView(hashToSession, "home.html");
+                        sessionHash.put("loginName", user.name);
+                        sessionHash.put("userPassword", user.password);
+//                        sessionHash.put("filmObject", user.films);
+                        return new ModelAndView(sessionHash, "home.html");
                     }
+
+//                    String filmId = request.queryParams("filmId");
+//                    int filmIdNum = - 1;
+//                    if (filmId != null){
+//                        filmIdNum = Integer.parseInt("filmId");
+//                    }
+//
+//                    ArrayList<Film> filmThreads = new ArrayList<Film>();
+//                    for (Film film : User.films){
+//                        if (film.filmId == filmIdNum){
+//                            filmThreads.add(film);
+//                        }
+//                    }
+
 
 
                 }),
                 new MustacheTemplateEngine()
             );//end of SparkGet
 
+//        Spark.get(
+//                "/json",
+//                ((request, response) -> {
+//                    String replyId = request.queryParams("replyId");
+//                    int replyIdNum = -1;
+//                    if(replyId != null){
+//                        replyIdNum = Integer.parseInt(replyId);
+//                    }
+//
+//                    ArrayList<Film> filmThreads = new ArrayList<>();
+//                    for (Film film : User.films){
+//                        if (film.filmId == filmIdNum){
+//                            filmThreads.add(film);
+//                        }
+//                    }
+//
+//                    JsonSerializer serializer = new JsonSerializer();
+//                    String json = serializer.include("*").serialize(filmThreads);
+//                    return json;
+//                })
+//        );
+
         Spark.post(
                 "/login",
                 ((request, response) -> {
-                    String name = request.queryParams("loginName");
-                    User user = users.get(name);
-                    if(user == null){
-                        user = new User(name);
-                        users.put(name, user);
-                    }
-
                     Session session = request.session();
-                    session.attribute("userName" , name);
+                    String nameInput = request.queryParams("loginName");
+                    String passwordInput = request.queryParams("loginPassword");
+
+
+                    if (nameInput == null || passwordInput == null ){
+                        throw new Exception("You must login with name and password");
+                    }
+                    User user = users.get(nameInput);
+                    if (user == null) {
+                            user = new User(nameInput, passwordInput);
+                            users.put(nameInput, user);
+                            users.put(passwordInput, user);
+                        }
+                    else if(!user.password.equals(passwordInput)) {
+                        throw new Exception("fool me once shame on you, fool me twice...");
+
+                    }
+                        session.attribute("loginName", nameInput);
+                        session.attribute("loginPassword", passwordInput);
+
+                        System.out.println(nameInput);
+                        System.out.println(passwordInput);
+                        System.out.println(user.name);
+                        System.out.println(user.password);
+
 
                     response.redirect("/");
                     return "";
@@ -71,6 +131,91 @@ public class Main {
                     return "";
                 })
         );
+
+        Spark.post(
+                "/create-film-entry",
+                ((request, response) -> {
+                    Session session = request.session();
+                    String userName = session.attribute("userName");
+                    if(userName == null){
+                        throw new Exception("Not logged in foo!");
+                    }
+                    String titleInput = request.queryParams("titleInput");
+                    String writerInput = request.queryParams("writerInput");
+                    String directorInput = request.queryParams("directorInput");
+                    String releaseInputString = request.queryParams("releaseInput");
+                    String notesInput = request.queryParams("notesInput");
+                    String seenInputString = request.queryParams("seenInput");
+                    String filmId = request.queryParams("filmId");
+                    if(titleInput == null || filmId == null){
+                        throw new Exception("No title text received foo!");
+                    }
+
+                    int filmIdNum = Integer.parseInt(filmId);
+                    int releaseInputNum = Integer.parseInt(releaseInputString);
+                    boolean seenInputBoolean = Boolean.parseBoolean(seenInputString);
+
+                    Film filmObject = new Film(User.films.size(), filmIdNum, userName, titleInput, writerInput, directorInput, releaseInputNum, notesInput, seenInputBoolean);
+                    User.films.add(filmObject);
+
+                    response.redirect(request.headers("Referer"));
+
+                    //response.redirect("/");
+                    return "";
+                })
+        );
+
+//        Spark.post(
+//                "/edit-film-entry",
+//                ((request, response) -> {
+//                    Session session = request.session();
+//                    String name = session.attribute("loginName");
+//                    User user = users.get(name);
+//                    String filmRemover = request.queryParams("filmRemover");
+//                    int fut = Integer.parseInt(filmRemover);
+//                    user.films.get(fut-1);
+//                    user.films.remove(fut-1);
+//
+//                    String filmReplacer = request.queryParams("filmReplacer")
+//                      or actually a bunch of these lines with most all of the variables that make up and Film object
+//                    Film  = new Film(filmReplacer);
+//
+//
+//
+//                    user.films.add(fut-1, title);
+//
+//                    response.redirect("/");
+//                    return "";
+//
+//                })
+//        );
+        Spark.post(
+                "/delete-film-entry",
+                ((request, response) -> {
+                    Session session = request.session();
+                    String name = session.attribute("loginName");
+                    User user = users.get(name);
+                    String filmKiller = request.queryParams("filmKiller");
+
+                    int fu = Integer.parseInt(filmKiller);
+                    user.films.remove(fu - 1);
+
+                    response.redirect("/");
+                    return "";
+                })
+        );
+
+//        static void addTestUsers(){
+//            users.put("Alice", new User("Thames", "123"));
+//            users.put("Bob", new User("Ryan", "123"));
+//            users.put("Charlie", new User("Tween", "123"));
+//        }
+//        static void addTestFilms(){
+//            films.add(new Film(0,-1, "Alice","Hello World!"));
+//            films.add(new Film(1,-1, "Bob","HI love it!"));
+//            films.add(new Film(2,0, "Charlie","Mee too!"));
+//            films.add(new Film(3,2, "Alice","Thanks!"));
+//        }
 
     }//end of MainMethod
 
