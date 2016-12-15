@@ -29,8 +29,8 @@ public class Main {
                     Session session = request.session();
                     String userName = session.attribute("loginName");
                     String userPassword = session.attribute("loginPassword");
-                    System.out.println(userName);
-                    System.out.println(userPassword);
+                    System.out.println("userName input to session:" +userName);
+                    System.out.println("password input to session:" +userPassword);
 
 
                     User user = users.get(userName);
@@ -42,7 +42,9 @@ public class Main {
                     }else{
                         sessionHash.put("loginName", user.name);
                         sessionHash.put("userPassword", user.password);
-//                        sessionHash.put("filmObject", user.films);
+                        sessionHash.put("filmObjects", user.films);
+                        System.out.println(user.name);
+                        System.out.println(user.password);
                         return new ModelAndView(sessionHash, "home.html");
                     }
 
@@ -136,31 +138,35 @@ public class Main {
                 "/create-film-entry",
                 ((request, response) -> {
                     Session session = request.session();
-                    String userName = session.attribute("userName");
-                    if(userName == null){
+                    String nameInput = session.attribute("loginName");
+                    User user = users.get(nameInput);
+                    System.out.println(nameInput);
+                    if(nameInput == null){
                         throw new Exception("Not logged in foo!");
                     }
-                    String titleInput = request.queryParams("titleInput");
-                    String writerInput = request.queryParams("writerInput");
-                    String directorInput = request.queryParams("directorInput");
-                    String releaseInputString = request.queryParams("releaseInput");
-                    String notesInput = request.queryParams("notesInput");
-                    String seenInputString = request.queryParams("seenInput");
-                    String filmId = request.queryParams("filmId");
-                    if(titleInput == null || filmId == null){
+                    String title = request.queryParams("titleInput");
+                    String writer = request.queryParams("writerInput");
+                    String director = request.queryParams("directorInput");
+                    String release = request.queryParams("releaseInput");
+                    String notes = request.queryParams("notesInput");
+                    String seenString = request.queryParams("seenInput");
+                    String filmIdString = request.queryParams("filmId");
+                    if(title == null){
                         throw new Exception("No title text received foo!");
                     }
+                    filmIdString = "0";//temporary until I remember how to generate these
+//                    int filmIdNum = Integer.parseInt(filmId);
+//                    int releaseInputNum = Integer.parseInt(releaseInputString);
+                    boolean seenBoolean = Boolean.parseBoolean(seenString);
+                    int filmId = Integer.parseInt(filmIdString);
 
-                    int filmIdNum = Integer.parseInt(filmId);
-                    int releaseInputNum = Integer.parseInt(releaseInputString);
-                    boolean seenInputBoolean = Boolean.parseBoolean(seenInputString);
 
-                    Film filmObject = new Film(User.films.size(), filmIdNum, userName, titleInput, writerInput, directorInput, releaseInputNum, notesInput, seenInputBoolean);
-                    User.films.add(filmObject);
+                    Film filmObject = new Film(filmId, nameInput, title, writer, director, release, notes, seenBoolean);
+                    user.films.add(filmObject);
 
-                    response.redirect(request.headers("Referer"));
+//                    response.redirect(request.headers("Referer"));
 
-                    //response.redirect("/");
+                    response.redirect("/");
                     return "";
                 })
         );
